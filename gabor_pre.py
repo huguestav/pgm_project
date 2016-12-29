@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
-"""
-Builds Gabor filters at various scales and orientations
-"""
-
 import cv2
 import numpy as np
 
-def build_filters():
-    filters = []
-    ksize = 5
-    for theta in np.arange(0, np.pi, np.pi/4):
-        for lambdap in np.arange(10,80, 30):
-            kern_even = cv2.getGaborKernel((ksize, ksize), 20, theta, lambdap, 0.5, 0, ktype=cv2.CV_32F)
-            kern_odd = cv2.getGaborKernel((ksize, ksize), 20, np.pi/2-theta, lambdap, 0.5, 0, ktype=cv2.CV_32F)
-            kern_even /= 1.5*kern_even.sum()
-            kern_odd /= 1.5*kern_odd.sum()
-            filters.append(kern_even)
-            filters.append(kern_odd)
-    return filters
+#Builds the Gabor filters for the required parameters
+
+def build_filters(ksize, theta_min, theta_max, theta_step, scale_min, scale_max, scale_step, sigma = 20, gamma = 0.5, psi = 0):
+    filters_even = []
+    filters_odd = []
+
+    
+    for theta in np.arange(theta_min, theta_max, theta_step):
+        for lambdap in np.arange(scale_min, scale_max, scale_step):
+          kern_even = cv2.getGaborKernel((ksize, ksize), sigma, theta, lambdap, gamma, psi, ktype=cv2.CV_32F)
+          kern_odd = cv2.getGaborKernel((ksize, ksize), sigma, theta+np.pi, lambdap, gamma, np.pi/2-psi, ktype=cv2.CV_32F)
+          kern_even /= 1.5*kern_even.sum()
+          kern_odd /= 1.5*kern_odd.sum()
+          filters_even.append(kern_even)
+          filters_odd.append(kern_odd)
+    return [filters_even, filters_odd]
