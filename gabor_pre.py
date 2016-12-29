@@ -4,13 +4,12 @@ import numpy as np
 
 #Builds the Gabor filters for the required parameters
 
-def build_filters(ksize, theta_min, theta_max, theta_step, scale_min, scale_max, scale_step, sigma = 20, gamma = 0.5, psi = 0):
+def build_filters(theta_min, theta_max, theta_step, scale_min, scale_max, scale_step, lambdap = 1., sigma = 20, gamma = 0.5, psi = 0):
     filters_even = []
     filters_odd = []
 
-    
     for theta in np.arange(theta_min, theta_max, theta_step):
-        for lambdap in np.arange(scale_min, scale_max, scale_step):
+        for ksize in np.arange(scale_min, scale_max, scale_step):
           kern_even = cv2.getGaborKernel((ksize, ksize), sigma, theta, lambdap, gamma, psi, ktype=cv2.CV_32F)
           kern_odd = cv2.getGaborKernel((ksize, ksize), sigma, theta+np.pi, lambdap, gamma, np.pi/2-psi, ktype=cv2.CV_32F)
           kern_even /= 1.5*kern_even.sum()
