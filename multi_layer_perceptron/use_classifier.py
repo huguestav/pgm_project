@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-
 from build_data import build_data
 
 import numpy as np
@@ -48,13 +47,9 @@ Y_test = Y[train_size:]
 Y_test = Y_test.reshape(test_size * width * height)
 
 
-# Train
-mlp = MLPClassifier(hidden_layer_sizes=(80,), max_iter=100, alpha=1e-4,
-                    # solver='adam',activation='logistic', verbose=10, tol=1e-4,
-                    solver='adam',activation='logistic', verbose=10, tol=0.01,
-                    random_state=1, learning_rate_init=.001)
-mlp.fit(X_train, Y_train)
-
+# Get the saved mlp
+from sklearn.externals import joblib
+mlp = joblib.load('mlp_corel_1.pkl')
 
 
 # Test the classifier
@@ -66,10 +61,6 @@ score = np.sum(Y_proba_max == Y_test)
 accuracy = score / float(test_size * width * height)
 
 print "test accuracy :", accuracy
-
-# Save mlp classifier to file
-from sklearn.externals import joblib
-joblib.dump(mlp, 'mlp_corel_1.pkl')
 
 
 # Test the classifier on training data
