@@ -28,17 +28,16 @@ w_regional = regional_rbm.components_
 ###############################################################################
 ###############################################################################
 ###############################################################################
-def convert_into_regions(reg_w, reg_h, reg_incr, width, height):
-    assert((width - reg_w) % reg_incr == 0)
-    assert((height - reg_h) % reg_incr == 0)
-    nb_reg_w = (width - reg_w) / reg_incr + 1
-    nb_reg_h = (height - reg_h) / reg_incr + 1
+def convert_into_regions(reg_w, reg_h, reg_incr_w, reg_incr_h, width, height):
+
+    nb_reg_w = (width - reg_w) / reg_incr_w + 1
+    nb_reg_h = (height - reg_h) / reg_incr_h + 1
     pixel_to_reg = [[[] for j in range(width)] for i in range(height)]
     for i in range(nb_reg_w):
-        p_wt = i * reg_incr
+        p_wt = i * reg_incr_w
         p_wb = p_wt + reg_w
         for j in range(nb_reg_h):
-            p_hl = j * reg_incr
+            p_hl = j * reg_incr_h
             p_hr = p_hl + reg_h
             for wp in range(p_wt,p_wb):
                 for hp in range(p_hl,p_hr):
@@ -68,7 +67,8 @@ def draw_finite(p):
 nb_labels = 7
 reg_w = 8
 reg_h = 8
-reg_incr = 4
+reg_incr_w = 4
+reg_incr_h = 4
 
 # Build test data (we are testing on one image)
 idx_test = 70
@@ -87,7 +87,7 @@ print "initial_accuracy :", initial_accuracy
 Y_guess = (Y_guess.reshape(width*height, 1) == np.arange(nb_labels)) * 1
 
 # Do the gibbs sampling
-n_steps = width * height
+n_steps = width * height/2
 np.random.seed(3)
 rand_order = np.arange(width*height)
 np.random.shuffle(rand_order)
@@ -95,7 +95,7 @@ np.random.shuffle(rand_order)
 fixed_labels = np.eye(7)
 
 n_tot = width * height
-pixel_to_reg = convert_into_regions(reg_w,reg_h, reg_incr, width, height)
+pixel_to_reg = convert_into_regions(reg_w,reg_h, reg_incr_w, reg_incr_h, width, height)
 
 Y_guess = Y_guess.reshape((height, width, nb_labels))
 size_region = reg_w * reg_h * nb_labels

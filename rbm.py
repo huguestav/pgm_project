@@ -4,27 +4,26 @@ import numpy as np
 from sklearn.externals import joblib
 from sklearn.neural_network import BernoulliRBM
 
-# Attention, ceci est la vieille fonction qui confond width et height
-def convert_into_regions(img, reg_w, reg_h, reg_incr, nb_labels, height, width):
-    global num_figure
-    assert((width - reg_w) % reg_incr == 0)
-    assert((height - reg_h) % reg_incr == 0)
-    nb_reg_w = (width - reg_w) / reg_incr + 1
-    nb_reg_h = (height - reg_h) / reg_incr + 1
+
+def convert_into_regions(img, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_labels, width, height):
+
+    nb_reg_w = (width - reg_w) / reg_incr_w + 1
+    nb_reg_h = (height - reg_h) / reg_incr_h + 1
     nb_reg = nb_reg_w * nb_reg_h
     L_r = np.empty((nb_reg, reg_w * reg_h * nb_labels))
+
     for i in range(nb_reg_w):
-        p_wt = i * reg_incr
+        p_wt = i * reg_incr_w
         p_wb = p_wt + reg_w
         for j in range(nb_reg_h):
-            p_hl = j * reg_incr
+            p_hl = j * reg_incr_h
             p_hr = p_hl + reg_h
             size = reg_w * reg_h * nb_labels
-            L_r[i * nb_reg_h + j] = img[p_wt:p_wb,p_hl:p_hr].reshape(size)
+            L_r[i * nb_reg_h + j] = img[p_hl:p_hr,p_wt:p_wb].reshape(size)
     return L_r
 
 
-def train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr, nb_iterations):
+def train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_iterations):
     nb_labels = len(np.unique(labels))
     (n_samples, height, width) = labels.shape
     trainingset_idx = range(60)
@@ -39,9 +38,9 @@ def train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr, nb_iterations):
     print("Transform regions...")
     L_r = np.array([]).reshape(0, reg_w * reg_h * nb_labels)
     for i in trainingset_idx:
-        L_r = np.append(L_r, convert_into_regions(Y[i], reg_w, reg_h, reg_incr,
+        L_r = np.append(L_r, convert_into_regions(Y[i], reg_w, reg_h, reg_incr_w, reg_incr_h,
                                                 nb_labels, width, height), axis=0)
-        print "{}/{}\r".format(str(i + 1), str(n_samples/3))
+        print "Image {}/{}\r".format(str(i + 1), len(trainingset_idx))
 
     # Model
     rbm = BernoulliRBM(n_components=nb_hidden, learning_rate=0.01,
@@ -64,12 +63,11 @@ filename = 'regional_rbm_corel.pkl'
 nb_hidden = 30
 reg_w = 8
 reg_h = 8
-reg_incr = 4
+reg_incr_w = 4
+reg_incr_h = 4
 nb_iterations = 20
 
-# !!!! Attention, j'utilise toujours la vieille fonction qui renvoie
-# directement l'image transformée en régions mais qui confond width et height
-regional_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr, nb_iterations)
+regional_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_iterations)
 save_rbm(regional_rbm, filename)
 
 
