@@ -4,7 +4,6 @@ import matplotlib.image as mpimg
 import numpy as np
 from sklearn.neural_network import MLPClassifier
 
-
 # images = np.load('images_rgb.npy')
 images = np.load('images_lab.npy')
 labels = np.load('labels.npy')
