@@ -1,29 +1,53 @@
 #!/usr/bin/env python2
 
 import numpy as np
+import sys
 
 from sklearn.externals import joblib
 from skimage import color
 from matplotlib import pyplot as plt
 from time import time
+from build_data import build_data
 
 tic = time()
 
+if len(sys.argv) < 2:
+        exit("Usage : python inference.py <image_num>")
+image_num = int(sys.argv[1]) - 1
 
 folder = 'Corel_Dataset/'
 images = np.load(folder + 'images_lab_old.npy')
 labels = np.load(folder + 'labels_old.npy')
+nb_labels = 7
 
 (n_samples, height, width, p) = images.shape
-Y = labels.reshape(n_samples, width * height)
+Y = labels.reshape(n_samples, height * width)
+X = images.reshape(n_samples, height, width, 3)
+X = X[image_num].reshape(1, height, width, 3)
 
-# Load the distribution on image 70 given by the mlp classifier
-distrib_mlp = np.load("models/" + 'mlp_distrib_corel_70.npy')
+image = color.lab2rgb(X.reshape(height,width,3))
+plt.subplot(2,2,1)
+plt.axis('off')
+plt.title('original')
+plt.imshow(image)
+
+# Build test data (we are testing on one image)
+X = build_data(X)
+(_, _, _, size_input) = X.shape
+
+Y_test = Y[image_num].reshape(width * height)
+plt.subplot(2,2,2)
+plt.axis('off')
+plt.title('ground truth')
+plt.imshow(Y_test.reshape(height, width))
+
+X_test = X.reshape(width * height, size_input)
 
 # Load the regional rbm learned on the first 60 images
 # regional_rbm = joblib.load("models/" + 'regional_rbm_1.pkl')
 regional_rbm = joblib.load("models/" + 'regional_rbm_corel.pkl')
 w_regional = regional_rbm.components_
+mlp_model = joblib.load("models/" + 'mlp_corel_1.pkl')
 
 ###############################################################################
 ###############################################################################
@@ -70,17 +94,18 @@ reg_h = 8
 reg_incr_w = 4
 reg_incr_h = 4
 
-# Build test data (we are testing on one image)
-idx_test = 70
-Y_test = Y[idx_test]
-Y_test = Y_test.reshape(width * height)
-
-
 # Initialize the gibbs sampling using the mlp clasifier
-Y_guess = np.argmax(distrib_mlp, axis=1)
-
+#Y_proba = mlp_model.predict_proba(X_test)
+distrib_mlp = np.load("models/" + 'mlp_distrib_corel_70.npy')
+Y_proba = distrib_mlp
+Y_guess = np.argmax(Y_proba, axis=1)
 initial_accuracy = np.sum(Y_guess == Y_test) / float(width * height)
 print "initial_accuracy :", initial_accuracy
+
+plt.subplot(2,2,3)
+plt.axis('off')
+plt.title('initial (MLP) : ' + str(initial_accuracy))
+plt.imshow(Y_guess.reshape(height, width))
 
 
 # Make Y_guess into a vector
@@ -122,7 +147,7 @@ for i in rand_order[range(n_steps)]:
     probas_rbm = np.exp(probas_rbm - np.max(probas_rbm))
     # probas_rbm = probas_rbm / np.sum(probas_rbm)
     #
-    probas = probas_rbm * distrib_mlp[i]
+    probas = probas_rbm * Y_proba[i]
     probas = probas / np.sum(probas)
     # Sample from distribution
     Y_guess[pixel] = fixed_labels[draw_finite(p=probas)]
@@ -131,14 +156,14 @@ for i in rand_order[range(n_steps)]:
 Y_guess_ = Y_guess.reshape((height*width, nb_labels))
 Y_guess_ = np.argmax(Y_guess_, axis=1)
 new_accuracy = np.sum(Y_guess_ == Y_test) / float(width * height)
+n_better = (new_accuracy - initial_accuracy) * width * height
 print "new_accuracy :", new_accuracy
 print "initial_accuracy :", initial_accuracy
-
-n_better = (new_accuracy - initial_accuracy) * width * height
 print "Number of pixels that have changed :", n_better
+print "Time : ", time()-tic, "s"
 
-
-# plt.imshow(Y_guess_.reshape((height, width)) / 7.)
-# plt.show()
-
-print("Time : "+str(time()-tic)+"s")
+plt.subplot(2,2,4)
+plt.axis('off')
+plt.title('final : ' + str(new_accuracy))
+plt.imshow(Y_guess_.reshape(height, width))
+plt.show()

@@ -5,7 +5,7 @@ from cv2 import GaussianBlur, filter2D
 from gabor_pre import build_filters
 
 
-def build_data(images, labels):
+def build_data(images):
     (n_samples, height, width, p) = images.shape
 
     # Filter the images

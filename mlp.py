@@ -15,7 +15,7 @@ labels = np.load(folder + 'labels.npy')
 (n_samples, height, width, p) = images.shape
 Y = labels.reshape(n_samples, width * height)
 
-X = build_data(images, labels)
+X = build_data(images)
 (n_samples, height, width, size_input) = np.shape(X)
 
 
