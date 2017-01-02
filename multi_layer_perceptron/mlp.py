@@ -84,6 +84,17 @@ accuracy = score / float(train_size * width * height)
 
 print "training accuracy :", accuracy
 
+
+
+# Save the distribution for one image
+idx_save = 70
+X_save = X[idx_save]
+X_save = X_save.reshape(width * height, size_input)
+
+mlp_distrib_image_save = mlp.predict_proba(X_save)
+np.save('mlp_distrib_image_70', mlp_distrib_image_save)
+
+
 ################################################################################
 
 # idx = 1
