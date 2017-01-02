@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 from build_data import build_data
 
+# from rbm import convert_into_regions
+
 import numpy as np
 from sklearn.neural_network import MLPClassifier
 
@@ -52,6 +54,20 @@ from sklearn.externals import joblib
 mlp = joblib.load('mlp_corel_1.pkl')
 
 
+###############################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+###############################################################################
 # Test the classifier
 Y_proba = mlp.predict_proba(X_test)
 

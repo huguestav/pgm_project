@@ -23,8 +23,8 @@ X = build_data(images, labels)
 np.random.seed(3)
 order = np.arange(n_samples)
 np.random.shuffle(order)
-X = X[order]
-Y = Y[order]
+# X = X[order]
+# Y = Y[order]
 
 
 
