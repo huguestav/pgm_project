@@ -5,7 +5,7 @@ from cv2 import GaussianBlur, filter2D
 from gabor_pre import build_filters
 
 
-def build_data(images, labels):
+def build_data(images):
     (n_samples, height, width, p) = images.shape
 
     # Filter the images
@@ -41,13 +41,6 @@ def build_data(images, labels):
     diff_of_g_translated_1 = translate_images(difference_of_g_1)
     diff_of_g_translated_2 = translate_images(difference_of_g_2)
     diff_of_g_translated_3 = translate_images(difference_of_g_3)
-
-
-    # Filter the images with gabor-filters
-    # import sys
-    # sys.path.append('../gabor_filter')
-
-
 
     theta_min = 0
     theta_max = np.pi
