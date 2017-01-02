@@ -54,7 +54,7 @@ def train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_iterat
 
 
 def save_rbm(rbm, filename):
-    joblib.dump(rbm, filename)
+    joblib.dump(rbm, "models/" + filename)
     return 0
 
 

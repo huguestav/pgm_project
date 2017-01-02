@@ -18,11 +18,11 @@ labels = np.load(folder + 'labels_old.npy')
 Y = labels.reshape(n_samples, width * height)
 
 # Load the distribution on image 70 given by the mlp classifier
-distrib_mlp = np.load('mlp_distrib_corel_70.npy')
+distrib_mlp = np.load("models/" + 'mlp_distrib_corel_70.npy')
 
 # Load the regional rbm learned on the first 60 images
-# regional_rbm = joblib.load('regional_rbm_1.pkl')
-regional_rbm = joblib.load('regional_rbm_corel.pkl')
+# regional_rbm = joblib.load("models/" + 'regional_rbm_1.pkl')
+regional_rbm = joblib.load("models/" + 'regional_rbm_corel.pkl')
 w_regional = regional_rbm.components_
 
 ###############################################################################

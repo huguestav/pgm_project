@@ -42,13 +42,6 @@ def build_data(images, labels):
     diff_of_g_translated_2 = translate_images(difference_of_g_2)
     diff_of_g_translated_3 = translate_images(difference_of_g_3)
 
-
-    # Filter the images with gabor-filters
-    # import sys
-    # sys.path.append('../gabor_filter')
-
-
-
     theta_min = 0
     theta_max = np.pi
     theta_step = np.pi/4

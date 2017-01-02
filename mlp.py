@@ -4,9 +4,9 @@ from build_data import build_data
 
 import numpy as np
 from sklearn.neural_network import MLPClassifier
-
 from skimage import color
 from matplotlib import pyplot as plt
+from sklearn.externals import joblib
 
 folder = 'Corel_Dataset/'
 images = np.load(folder + 'images_lab.npy')
@@ -68,8 +68,8 @@ accuracy = score / float(test_size * width * height)
 print "test accuracy :", accuracy
 
 # Save mlp classifier to file
-from sklearn.externals import joblib
-joblib.dump(mlp, 'mlp_corel_1.pkl')
+filename = 'mlp_corel_1.pkl'
+joblib.dump(mlp, "models/" + filename)
 
 
 # Test the classifier on training data
