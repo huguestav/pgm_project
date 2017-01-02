@@ -11,8 +11,8 @@ tic = time()
 
 
 folder = 'Corel_Dataset/'
-images = np.load(folder + 'images_lab.npy')
-labels = np.load(folder + 'labels.npy')
+images = np.load(folder + 'images_lab_old.npy')
+labels = np.load(folder + 'labels_old.npy')
 
 (n_samples, height, width, p) = images.shape
 Y = labels.reshape(n_samples, width * height)
@@ -21,7 +21,8 @@ Y = labels.reshape(n_samples, width * height)
 distrib_mlp = np.load('mlp_distrib_corel_70.npy')
 
 # Load the regional rbm learned on the first 60 images
-regional_rbm = joblib.load('regional_rbm_1.pkl')
+# regional_rbm = joblib.load('regional_rbm_1.pkl')
+regional_rbm = joblib.load('regional_rbm_corel.pkl')
 w_regional = regional_rbm.components_
 
 ###############################################################################
