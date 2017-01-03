@@ -64,16 +64,16 @@ std = mlp_moments["std"]
 nb_labels = len(np.unique(labels))
 
 # rmb parameters
-# reg_w = 8
-# reg_h = 8
-# reg_incr_w = 4
-# reg_incr_h = 4
-reg_w = 6
-reg_h = 4
-reg_incr_w = 4
-reg_incr_h = 1
-
-
+if dataname == "corel":
+    reg_w = 8
+    reg_h = 8
+    reg_incr_w = 4
+    reg_incr_h = 4
+if dataname == "sowerby":
+    reg_w = 6
+    reg_h = 4
+    reg_incr_w = 4
+    reg_incr_h = 1
 
 
 precision_acc = 3
