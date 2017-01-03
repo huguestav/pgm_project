@@ -268,7 +268,7 @@ info_g = {
 }
 
 # Sampling ##################################
-print "Sample"
+print "Sample..."
 for i in range(n_runs):
 
     Y_guess = gibbs_sampling(Y_guess, n_steps, rand_order, info_r, info_g, Y_proba)
@@ -279,7 +279,7 @@ for i in range(n_runs):
 
     print "iteration :", i+1
     print "new_accuracy :", new_accuracy
-    print "Number of pixels that have changed :", round(n_better), "\n"
+    print "Number of pixels that have changed :", int(n_better), "\n"
 
 # Results ##################################
 Y_guess_ = Y_guess.reshape((height*width, nb_labels))
