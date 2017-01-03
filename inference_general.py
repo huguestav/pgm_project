@@ -27,6 +27,9 @@ def final_plot(arr, title, i):
 	plt.title(title)
 	plt.imshow(arr)
 
+def normalize(X, mean, std):
+    return (X-mean) / std
+
 tic = time()
 
 if len(sys.argv) < 3:
@@ -38,13 +41,6 @@ images = np.load(folder + 'images_lab.npy')
 labels = np.load(folder + 'labels.npy')
 
 dataname = sys.argv[1].lower()
-
-
-
-# mlp_model = joblib.load("models/" + 'mlp_corel_1.pkl')
-# mlp_moments = pickle.load(open("models/mlp_moments_sowerby.pkl", "rb" ))
-# regional_rbm = joblib.load("models/" + 'regional_rbm_corel.pkl')
-
 
 
 mlp_file = "models/mlp_{dataname}_1.pkl".format(dataname=dataname)
@@ -104,11 +100,9 @@ X = build_data(X)
 
 Y_test = Y[image_num].reshape(width * height)
 X_test = X[0].reshape(width * height, size_input)
+X_test = normalize(X_test, mean, std)
 final_plot(colorize(Y_test.reshape(height, width)), 'ground truth', 2)
 
-# Normalize the data
-X_test = X_test - mean
-X_test = X_test / std
 
 ###############################################################################
 ###############################################################################
@@ -129,9 +123,6 @@ def convert_into_regions(reg_w, reg_h, reg_incr_w, reg_incr_h, width, height):
                     pixel_to_reg[hp][wp].append([p_hl,p_hr,p_wt,p_wb])
     return pixel_to_reg
 
-###############################################################################
-###############################################################################
-###############################################################################
 
 def draw_finite(p):
     """
@@ -151,8 +142,6 @@ def draw_finite(p):
 
 # Initialize the gibbs sampling using the mlp clasifier
 Y_proba = mlp_model.predict_proba(X_test)
-# Y_proba = np.load("models/mlp_distrib_corel_70.npy")
-# Y_proba = np.load("models/mlp_distrib_sowerby_70.npy")
 
 Y_init = np.argmax(Y_proba, axis=1)
 initial_accuracy = round(np.sum(Y_init == Y_test) / float(width * height), precision_acc)
@@ -196,7 +185,11 @@ info_g = {
 
 
 
-def trick(energy):
+def proba_from_energy(energy):
+    """
+    The purpose of this funtion is to compute the probability from the energy
+    trying to avoid overflow.
+    """
     big_idx = energy > 700
     small_idx = np.logical_not(big_idx)
     big_values = energy[big_idx]
@@ -223,11 +216,10 @@ def compute_proba_rbm(Y_guess, pixel_to_reg, pixel, nb_labels, fixed_labels,
             L_r_pixel[idx] = Y_guess[p_hl:p_hr,p_wt:p_wb].reshape(size_region)
         energy_r = np.dot(L_r_pixel, w_rbm.T)
         if scale == "g":
-            proba_r = trick(energy_r)
+            proba_r = proba_from_energy(energy_r)
         else:
             proba_r = np.log(1 + np.exp(energy_r))
         probas_rbm[k] = np.sum(proba_r)
-    # probas_rbm = np.exp(probas_rbm - np.max(probas_rbm))
     probas_rbm = probas_rbm - np.max(probas_rbm)
 
     return probas_rbm
@@ -265,14 +257,12 @@ def gibbs_sampling(Y_guess, n_steps, rand_order, info_r, info_g, distrib_mlp):
         # Compute probas rbm global
         probas_rbm_g = compute_proba_rbm(Y_guess, pixel_to_reg_g, pixel, nb_labels,
                                        fixed_labels, size_region_g, w_rbm_g)
-        #
+        # Compute general proba
         probas = probas_rbm_g + probas_rbm_r + np.log(distrib_mlp[i])
         probas = probas - np.max(probas)
         probas = np.exp(probas)
         probas = probas / np.sum(probas)
 
-        # probas = probas_rbm * distrib_mlp[i]
-        # probas = probas / np.sum(probas)
         # Sample from distribution
         Y_guess[pixel] = fixed_labels[draw_finite(p=probas)]
 
@@ -280,12 +270,17 @@ def gibbs_sampling(Y_guess, n_steps, rand_order, info_r, info_g, distrib_mlp):
 
 
 Y_guess = Y_guess.reshape((height, width, nb_labels))
-n_runs = 5
+
+if len(sys.argv) == 4:
+    n_runs = int(sys.argv[3])
+else:
+    n_runs = 1
+
 for i in range(n_runs):
     Y_guess = gibbs_sampling(Y_guess, n_steps, rand_order, info_r, info_g, Y_proba)
 
     print "iteration :", i+1
-    # Post prod
+    # Prints
     Y_guess_ = Y_guess.reshape((height*width, nb_labels))
     Y_guess_ = np.argmax(Y_guess_, axis=1)
     new_accuracy = np.sum(Y_guess_ == Y_test) / float(width * height)
@@ -294,8 +289,6 @@ for i in range(n_runs):
     n_better = (new_accuracy - initial_accuracy) * width * height
     print "Number of pixels that have changed :", n_better
     print ""
-
-
 
 
 
