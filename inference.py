@@ -35,13 +35,24 @@ plt.imshow(image)
 X = build_data(X)
 (_, _, _, size_input) = X.shape
 
+
 Y_test = Y[image_num].reshape(width * height)
 plt.subplot(2,2,2)
 plt.axis('off')
 plt.title('ground truth')
 plt.imshow(Y_test.reshape(height, width))
 
-X_test = X.reshape(width * height, size_input)
+import pickle
+mlp_moments = pickle.load(open("models/mlp_moments.pkl", "rb" ))
+mean = mlp_moments["mean"]
+std = mlp_moments["std"]
+
+X_test = X[0]
+X_test = X_test.reshape(width * height, size_input)
+
+# Normalize the data
+X_test = X_test - mean
+X_test = X_test / std
 
 # Load the regional rbm learned on the first 60 images
 # regional_rbm = joblib.load("models/" + 'regional_rbm_1.pkl')
@@ -95,9 +106,9 @@ reg_incr_w = 4
 reg_incr_h = 4
 
 # Initialize the gibbs sampling using the mlp clasifier
-#Y_proba = mlp_model.predict_proba(X_test)
+Y_proba = mlp_model.predict_proba(X_test)
 distrib_mlp = np.load("models/" + 'mlp_distrib_corel_70.npy')
-Y_proba = distrib_mlp
+# Y_proba = distrib_mlp
 Y_guess = np.argmax(Y_proba, axis=1)
 initial_accuracy = np.sum(Y_guess == Y_test) / float(width * height)
 print "initial_accuracy :", initial_accuracy
@@ -112,7 +123,7 @@ plt.imshow(Y_guess.reshape(height, width))
 Y_guess = (Y_guess.reshape(width*height, 1) == np.arange(nb_labels)) * 1
 
 # Do the gibbs sampling
-n_steps = width * height/2
+n_steps = width * height
 np.random.seed(3)
 rand_order = np.arange(width*height)
 np.random.shuffle(rand_order)

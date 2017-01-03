@@ -9,13 +9,13 @@ from matplotlib import pyplot as plt
 from sklearn.externals import joblib
 
 folder = 'Corel_Dataset/'
-images = np.load(folder + 'images_lab.npy')
-labels = np.load(folder + 'labels.npy')
+images = np.load(folder + 'images_lab_old.npy')
+labels = np.load(folder + 'labels_old.npy')
 
 (n_samples, height, width, p) = images.shape
 Y = labels.reshape(n_samples, width * height)
 
-X = build_data(images)
+X = build_data(images, save_moments=True)
 (n_samples, height, width, size_input) = np.shape(X)
 
 

@@ -5,7 +5,7 @@ from cv2 import GaussianBlur, filter2D
 from gabor_pre import build_filters
 
 
-def build_data(images):
+def build_data(images, save_moments=False):
     (n_samples, height, width, p) = images.shape
 
     # Filter the images
@@ -113,12 +113,17 @@ def build_data(images):
             X[:,:,:,i+n_input+8*(j+5)] = images_gab_translated[j,i]
 
 
-    # Normalize X
-    mean = np.mean(X, axis=(0,1,2))
-    X = X - mean
+    if save_moments:
+        # Normalize X
+        mean = np.mean(X, axis=(0,1,2))
+        X = X - mean
 
-    std = np.std(X, axis=(0,1,2))
-    X = X / std
+        std = np.std(X, axis=(0,1,2))
+        X = X / std
+
+        import pickle
+        moments = {"mean": mean, "std": std}
+        pickle.dump(moments, open( "models/mlp_moments.pkl", "wb" ))
 
     return X
 
