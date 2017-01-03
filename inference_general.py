@@ -30,83 +30,31 @@ def final_plot(arr, title, i):
 def normalize(X, mean, std):
     return (X-mean) / std
 
-tic = time()
+def get_args():
+	if len(sys.argv) < 3:
+		exit("Usage : python " + sys.argv[0] + " <Corel|Sowerby> <image_num> [<nb_iter>]")
+	if len(sys.argv) == 4:
+		n_runs = int(sys.argv[3])
+	else:
+    		n_runs = 1
+	image_num = int(sys.argv[2]) - 1
+	database = sys.argv[1]
+	return database, image_num, n_runs, time()
 
-if len(sys.argv) < 3:
-        exit("Usage : python inference.py <Corel|Sowerby> <image_num>")
+def get_models(dataname):
 
-image_num = int(sys.argv[2]) - 1
-folder = sys.argv[1] + '_Dataset/'
-images = np.load(folder + 'images_lab.npy')
-labels = np.load(folder + 'labels.npy')
+	mlp_file = "models/mlp_{dataname}_1.pkl".format(dataname=dataname)
+	moments_file = "models/mlp_moments_{dataname}.pkl".format(dataname=dataname)
+	rbm_r_file = "models/regional_rbm_{dataname}.pkl".format(dataname=dataname)
+	rbm_g_file = "models/global_rbm_{dataname}.pkl".format(dataname=dataname)
 
-dataname = sys.argv[1].lower()
+	mlp_model = joblib.load(mlp_file)
+	mlp_moments = pickle.load(open(moments_file, "rb" ))
+	regional_rbm = joblib.load(rbm_r_file)
+	global_rbm = joblib.load(rbm_g_file)
 
+	return mlp_model, mlp_moments, regional_rbm, global_rbm
 
-mlp_file = "models/mlp_{dataname}_1.pkl".format(dataname=dataname)
-moments_file = "models/mlp_moments_{dataname}.pkl".format(dataname=dataname)
-rbm_r_file = "models/regional_rbm_{dataname}.pkl".format(dataname=dataname)
-rbm_g_file = "models/global_rbm_{dataname}.pkl".format(dataname=dataname)
-
-mlp_model = joblib.load(mlp_file)
-mlp_moments = pickle.load(open(moments_file, "rb" ))
-regional_rbm = joblib.load(rbm_r_file)
-global_rbm = joblib.load(rbm_g_file)
-
-w_rbm_g = global_rbm.components_
-w_rbm_r = regional_rbm.components_
-
-mean = mlp_moments["mean"]
-std = mlp_moments["std"]
-nb_labels = len(np.unique(labels))
-
-# rmb parameters
-if dataname == "corel":
-    reg_w_g = 18
-    reg_h_g = 12
-    reg_incr_h_g = 12
-    reg_incr_w_g = 18
-
-    reg_w_r = 8
-    reg_h_r = 8
-    reg_incr_w_r = 4
-    reg_incr_h_r = 4
-if dataname == "sowerby":
-    reg_w_g = 8
-    reg_h_g = 8
-    reg_incr_w_g = 8
-    reg_incr_h_g = 8
-
-    reg_w_r = 6
-    reg_h_r = 4
-    reg_incr_w_r = 4
-    reg_incr_h_r = 1
-
-
-precision_acc = 3
-np.random.seed(3)
-(n_samples, height, width, p) = images.shape
-n_steps = width * height
-
-Y = labels.reshape(n_samples, height * width)
-X = images.reshape(n_samples, height, width, 3)
-X = X[image_num].reshape(1, height, width, 3)
-image = color.lab2rgb(X.reshape(height,width,3))
-final_plot(image, 'original', 1)
-
-# Build test data (we are testing on one image)
-X = build_data(X)
-(_, _, _, size_input) = X.shape
-
-Y_test = Y[image_num].reshape(width * height)
-X_test = X[0].reshape(width * height, size_input)
-X_test = normalize(X_test, mean, std)
-final_plot(colorize(Y_test.reshape(height, width)), 'ground truth', 2)
-
-
-###############################################################################
-###############################################################################
-###############################################################################
 def convert_into_regions(reg_w, reg_h, reg_incr_w, reg_incr_h, width, height):
 
     nb_reg_w = (width - reg_w) / reg_incr_w + 1
@@ -123,7 +71,6 @@ def convert_into_regions(reg_w, reg_h, reg_incr_w, reg_incr_h, width, height):
                     pixel_to_reg[hp][wp].append([p_hl,p_hr,p_wt,p_wb])
     return pixel_to_reg
 
-
 def draw_finite(p):
     """
     Draw a sample from a distribution on a finite set
@@ -135,55 +82,6 @@ def draw_finite(p):
     while u > q[i]:
         i += 1
     return i
-
-###############################################################################
-###############################################################################
-###############################################################################
-
-# Initialize the gibbs sampling using the mlp clasifier
-Y_proba = mlp_model.predict_proba(X_test)
-
-Y_init = np.argmax(Y_proba, axis=1)
-initial_accuracy = round(np.sum(Y_init == Y_test) / float(width * height), precision_acc)
-final_plot(colorize(Y_init.reshape(height, width)), 'initial (MLP) : ' + str(initial_accuracy), 3)
-
-# Make Y_guess into a vector
-Y_guess = (Y_init.copy().reshape(width*height, 1) == np.arange(nb_labels)) * 1
-
-# Do the gibbs sampling
-rand_order = np.arange(width*height)
-np.random.shuffle(rand_order)
-
-fixed_labels = np.eye(7)
-
-pixel_to_reg_g = convert_into_regions(reg_w_g,reg_h_g, reg_incr_w_g, reg_incr_h_g,
-                                    width, height)
-
-pixel_to_reg_r = convert_into_regions(reg_w_r,reg_h_r, reg_incr_w_r, reg_incr_h_r,
-                                    width, height)
-
-
-
-# Build the two information dicts
-info_r = {
-    "reg_w_r": reg_w_r,
-    "reg_h_r": reg_h_r,
-    "reg_incr_w_r": reg_incr_w_r,
-    "reg_incr_h_r": reg_incr_h_r,
-    "pixel_to_reg_r": pixel_to_reg_r,
-    "w_rbm_r": w_rbm_r,
-}
-
-info_g = {
-    "reg_w_g": reg_w_g,
-    "reg_h_g": reg_h_g,
-    "reg_incr_w_g": reg_incr_w_g,
-    "reg_incr_h_g": reg_incr_h_g,
-    "pixel_to_reg_g": pixel_to_reg_g,
-    "w_rbm_g": w_rbm_g,
-}
-
-
 
 def proba_from_energy(energy):
     """
@@ -269,29 +167,121 @@ def gibbs_sampling(Y_guess, n_steps, rand_order, info_r, info_g, distrib_mlp):
     return Y_guess
 
 
+# Load Parameters ########################
+database, image_num, n_runs, tic = get_args()
+folder = database + '_Dataset/'
+dataname = database.lower()
+images = np.load(folder + 'images_lab.npy')
+labels = np.load(folder + 'labels.npy')
+
+# saved models
+mlp_model, mlp_moments, regional_rbm, global_rbm = get_models(dataname)
+
+w_rbm_g = global_rbm.components_
+w_rbm_r = regional_rbm.components_
+
+mean = mlp_moments["mean"]
+std = mlp_moments["std"]
+nb_labels = len(np.unique(labels))
+precision_acc = 3
+np.random.seed(3)
+
+# rmb parameters
+if dataname == "corel":
+    reg_w_g = 18
+    reg_h_g = 12
+    reg_incr_h_g = 12
+    reg_incr_w_g = 18
+
+    reg_w_r = 8
+    reg_h_r = 8
+    reg_incr_w_r = 4
+    reg_incr_h_r = 4
+if dataname == "sowerby":
+    reg_w_g = 8
+    reg_h_g = 8
+    reg_incr_w_g = 8
+    reg_incr_h_g = 8
+
+    reg_w_r = 6
+    reg_h_r = 4
+    reg_incr_w_r = 4
+    reg_incr_h_r = 1
+
+(n_samples, height, width, p) = images.shape
+n_steps = width * height
+
+# Raw image ###############################
+X = images.reshape(n_samples, height, width, 3)
+X = X[image_num].reshape(1, height, width, 3)
+image = color.lab2rgb(X.reshape(height,width,3))
+final_plot(image, 'original', 1)
+
+# Feautre image ###########################
+print "Compute Features..."
+X = build_data(X)
+(_, _, _, size_input) = X.shape
+X_test = X[0].reshape(width * height, size_input)
+X_test = normalize(X_test, mean, std)
+
+# Ground truth labels #####################
+Y = labels.reshape(n_samples, height * width)
+Y_test = Y[image_num].reshape(width * height)
+final_plot(colorize(Y_test.reshape(height, width)), 'ground truth', 2)
+
+# Initial labeling (MLP) ##################
+Y_proba = mlp_model.predict_proba(X_test)
+Y_init = np.argmax(Y_proba, axis=1)
+initial_accuracy = round(np.sum(Y_init == Y_test) / float(width * height), precision_acc)
+final_plot(colorize(Y_init.reshape(height, width)), 'initial (MLP) : ' + str(initial_accuracy), 3)
+
+# Make Y_guess into a vector
+Y_guess = (Y_init.copy().reshape(width*height, 1) == np.arange(nb_labels)) * 1
 Y_guess = Y_guess.reshape((height, width, nb_labels))
 
-if len(sys.argv) == 4:
-    n_runs = int(sys.argv[3])
-else:
-    n_runs = 1
+# Sampling parameters
+rand_order = np.arange(width*height)
+np.random.shuffle(rand_order)
+fixed_labels = np.eye(7)
+pixel_to_reg_g = convert_into_regions(reg_w_g,reg_h_g, reg_incr_w_g, reg_incr_h_g,
+                                    width, height)
+pixel_to_reg_r = convert_into_regions(reg_w_r,reg_h_r, reg_incr_w_r, reg_incr_h_r,
+                                    width, height)
 
+# Build the two information dicts
+info_r = {
+    "reg_w_r": reg_w_r,
+    "reg_h_r": reg_h_r,
+    "reg_incr_w_r": reg_incr_w_r,
+    "reg_incr_h_r": reg_incr_h_r,
+    "pixel_to_reg_r": pixel_to_reg_r,
+    "w_rbm_r": w_rbm_r,
+}
+
+info_g = {
+    "reg_w_g": reg_w_g,
+    "reg_h_g": reg_h_g,
+    "reg_incr_w_g": reg_incr_w_g,
+    "reg_incr_h_g": reg_incr_h_g,
+    "pixel_to_reg_g": pixel_to_reg_g,
+    "w_rbm_g": w_rbm_g,
+}
+
+# Sampling ##################################
+print "Sample"
 for i in range(n_runs):
-    Y_guess = gibbs_sampling(Y_guess, n_steps, rand_order, info_r, info_g, Y_proba)
 
-    print "iteration :", i+1
-    # Prints
+    Y_guess = gibbs_sampling(Y_guess, n_steps, rand_order, info_r, info_g, Y_proba)
     Y_guess_ = Y_guess.reshape((height*width, nb_labels))
     Y_guess_ = np.argmax(Y_guess_, axis=1)
-    new_accuracy = np.sum(Y_guess_ == Y_test) / float(width * height)
-    print "new_accuracy :", new_accuracy
-
+    new_accuracy = round(np.sum(Y_guess_ == Y_test) / float(width * height), precision_acc)
     n_better = (new_accuracy - initial_accuracy) * width * height
-    print "Number of pixels that have changed :", n_better
-    print ""
 
+    print "iteration :", i+1
+    print "new_accuracy :", new_accuracy
+    print "Number of pixels that have changed :", round(n_better), "\n"
 
-
+# Results ##################################
 Y_guess_ = Y_guess.reshape((height*width, nb_labels))
 Y_guess_ = np.argmax(Y_guess_, axis=1)
 new_accuracy = round(np.sum(Y_guess_ == Y_test) / float(width * height), precision_acc)
