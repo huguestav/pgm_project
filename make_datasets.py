@@ -18,8 +18,13 @@ for f in dataset_folders:
 
 	files = [name for name in os.listdir(labels_path) if os.path.isfile(images_path+"/"+name)]
 	nb_images = len(files)
-	width, height = np.loadtxt(open(images_path+"/"+name)).shape
+	width, height = np.loadtxt(open(images_path+"/"+files[0])).shape
 	height = height / 3
+	
+	new_order = [int(u.split("_")[1])-1 for u in files]
+	f_o = zip(new_order,files)
+	f_o.sort()
+	files = [u[1] for u in f_o]
 
 	# Initialize the arrays
 	images  = np.zeros((nb_images, width, height, 3))
@@ -37,8 +42,11 @@ for f in dataset_folders:
 		labels[i] = np.reshape(label, (width, height), order='F')
 
 		# Convert image to CIE-LAB (image has to takes values between 0 and 1)
-		images_lab[i] = color.rgb2lab(images[i] / 255.)
-
+		images[i] = images[i] / 255.
+		images_lab[i] = color.rgb2lab(images[i])
+		
+		if f == "Sowerby_Dataset":
+			images_lab[i] = images_lab[i] * 255.
 
 	# Save the arrays into files
 	np.save(f + '/images_rgb', images)

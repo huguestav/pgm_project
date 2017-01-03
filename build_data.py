@@ -102,7 +102,6 @@ def build_data(images, save_moments=False):
 
 
     for i in range(8):
-        print ''
         # X[:,:,:,i+n_input+8*2] = l_translated[i]
         X[:,:,:,i+n_input+8*0] = diff_of_g_translated_1[i]
         X[:,:,:,i+n_input+8*1] = diff_of_g_translated_2[i]
