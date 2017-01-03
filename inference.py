@@ -36,18 +36,46 @@ image_num = int(sys.argv[2]) - 1
 folder = sys.argv[1] + '_Dataset/'
 images = np.load(folder + 'images_lab.npy')
 labels = np.load(folder + 'labels.npy')
-mlp_moments = pickle.load(open("models/mlp_moments.pkl", "rb" ))
-regional_rbm = joblib.load("models/" + 'regional_rbm_corel.pkl')
-mlp_model = joblib.load("models/" + 'mlp_corel_1.pkl')
+
+dataname = sys.argv[1].lower()
+
+
+
+# mlp_model = joblib.load("models/" + 'mlp_corel_1.pkl')
+# mlp_moments = pickle.load(open("models/mlp_moments_sowerby.pkl", "rb" ))
+# regional_rbm = joblib.load("models/" + 'regional_rbm_corel.pkl')
+
+
+
+mlp_file = "models/mlp_{dataname}_1.pkl".format(dataname=dataname)
+moments_file = "models/mlp_moments_{dataname}.pkl".format(dataname=dataname)
+rbm_r_file = "models/regional_rbm_{dataname}.pkl".format(dataname=dataname)
+
+mlp_model = joblib.load(mlp_file)
+mlp_moments = pickle.load(open(moments_file, "rb" ))
+regional_rbm = joblib.load(rbm_r_file)
+
+
+
 
 w_regional = regional_rbm.components_
 mean = mlp_moments["mean"]
 std = mlp_moments["std"]
-nb_labels = 7
-reg_w = 8
-reg_h = 8
+nb_labels = len(np.unique(labels))
+
+# rmb parameters
+# reg_w = 8
+# reg_h = 8
+# reg_incr_w = 4
+# reg_incr_h = 4
+reg_w = 6
+reg_h = 4
 reg_incr_w = 4
-reg_incr_h = 4
+reg_incr_h = 1
+
+
+
+
 precision_acc = 3
 np.random.seed(3)
 (n_samples, height, width, p) = images.shape

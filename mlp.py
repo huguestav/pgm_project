@@ -8,14 +8,16 @@ from skimage import color
 from matplotlib import pyplot as plt
 from sklearn.externals import joblib
 
-folder = 'Corel_Dataset/'
-images = np.load(folder + 'images_lab_old.npy')
-labels = np.load(folder + 'labels_old.npy')
+# folder = 'Corel_Dataset/'
+folder = 'Sowerby_Dataset/'
+dataname = "sowerby"
+images = np.load(folder + 'images_lab.npy')
+labels = np.load(folder + 'labels.npy')
 
 (n_samples, height, width, p) = images.shape
 Y = labels.reshape(n_samples, width * height)
 
-X = build_data(images, save_moments=True)
+X = build_data(images, save_moments=dataname)
 (n_samples, height, width, size_input) = np.shape(X)
 
 
@@ -68,7 +70,7 @@ accuracy = score / float(test_size * width * height)
 print "test accuracy :", accuracy
 
 # Save mlp classifier to file
-filename = 'mlp_corel_1.pkl'
+filename = 'mlp_{dataname}_1.pkl'.format(dataname=dataname)
 joblib.dump(mlp, "models/" + filename)
 
 
@@ -92,7 +94,7 @@ X_save = X[idx_save]
 X_save = X_save.reshape(width * height, size_input)
 
 mlp_distrib_image_save = mlp.predict_proba(X_save)
-np.save('mlp_distrib_corel_70', mlp_distrib_image_save)
+np.save('mlp_distrib_{dataname}_70'.format(dataname=dataname), mlp_distrib_image_save)
 
 
 ################################################################################

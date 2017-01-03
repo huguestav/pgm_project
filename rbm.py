@@ -58,17 +58,18 @@ def save_rbm(rbm, filename):
     return 0
 
 
-labels = np.load('Corel_Dataset/labels_old.npy')
-filename = 'regional_rbm_corel.pkl'
-nb_hidden = 30
-reg_w = 8
-reg_h = 8
-reg_incr_w = 4
-reg_incr_h = 4
-nb_iterations = 20
+# labels = np.load('Corel_Dataset/labels_old.npy')
+# filename = 'regional_rbm_corel.pkl'
+# nb_hidden = 30
+# reg_w = 8
+# reg_h = 8
+# reg_incr_w = 4
+# reg_incr_h = 4
+# nb_iterations = 30
 
-regional_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_iterations)
-save_rbm(regional_rbm, filename)
+# regional_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w,
+#                         reg_incr_h, nb_iterations)
+# save_rbm(regional_rbm, filename)
 
 
 # labels = np.load('Corel_Dataset/labels_old.npy')
@@ -85,5 +86,33 @@ save_rbm(regional_rbm, filename)
 # global_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr, nb_iterations)
 # save_rbm(global_rbm, filename)
 
+###############################################################################
 
+labels = np.load('Sowerby_Dataset/labels.npy')
+filename = 'regional_rbm_sowerby.pkl'
+nb_hidden = 20
+reg_w = 6
+reg_h = 4
+reg_incr_w = 4
+reg_incr_h = 1
+nb_iterations = 30
+
+regional_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w,
+                        reg_incr_h, nb_iterations)
+save_rbm(regional_rbm, filename)
+
+
+# labels = np.load('Corel_Dataset/labels_old.npy')
+# filename = 'global_rbm_corel.pkl'
+# nb_hidden = 10
+# reg_w = 18
+# reg_h = 12
+# reg_incr = 12
+# nb_iterations = 5
+# height = 120
+# width = 180
+
+
+# global_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr, nb_iterations)
+# save_rbm(global_rbm, filename)
 

@@ -122,7 +122,8 @@ def build_data(images, save_moments=False):
 
         import pickle
         moments = {"mean": mean, "std": std}
-        pickle.dump(moments, open( "models/mlp_moments.pkl", "wb" ))
+        filename = "models/mlp_moments_{dataname}.pkl".format(dataname=save_moments)
+        pickle.dump(moments, open(filename, "wb" ))
 
     return X
 
