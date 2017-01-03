@@ -9,6 +9,17 @@ from matplotlib import pyplot as plt
 from time import time
 from build_data import build_data
 
+
+def colorize(arr):
+	(h,w) = arr.shape
+	new_arr = np.empty((h,w,3))
+	cdict = {0 : [0,0,0], 1 : [150,0,0], 2: [0,150,0], 3: [0,0,150],
+		4 : [241, 196, 15], 5: [125, 60, 152], 6: [243, 156, 18], 7: [255,255,255]}
+	for y in range(h):
+		for x in range(w):
+			new_arr[y][x] = [u / 255. for u in cdict[arr[y][x]]]
+	return new_arr
+
 tic = time()
 
 if len(sys.argv) < 2:
@@ -35,12 +46,11 @@ plt.imshow(image)
 X = build_data(X)
 (_, _, _, size_input) = X.shape
 
-
 Y_test = Y[image_num].reshape(width * height)
 plt.subplot(2,2,2)
 plt.axis('off')
 plt.title('ground truth')
-plt.imshow(Y_test.reshape(height, width))
+plt.imshow(colorize(Y_test.reshape(height, width)))
 
 import pickle
 mlp_moments = pickle.load(open("models/mlp_moments.pkl", "rb" ))
@@ -116,7 +126,7 @@ print "initial_accuracy :", initial_accuracy
 plt.subplot(2,2,3)
 plt.axis('off')
 plt.title('initial (MLP) : ' + str(initial_accuracy))
-plt.imshow(Y_guess.reshape(height, width))
+plt.imshow(colorize(Y_guess.reshape(height, width)))
 
 
 # Make Y_guess into a vector
@@ -176,5 +186,5 @@ print "Time : ", time()-tic, "s"
 plt.subplot(2,2,4)
 plt.axis('off')
 plt.title('final : ' + str(new_accuracy))
-plt.imshow(Y_guess_.reshape(height, width))
+plt.imshow(colorize(Y_guess_.reshape(height, width)))
 plt.show()
