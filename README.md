@@ -2,9 +2,9 @@
 
 ## Authors
 
--- Simon Evain
--- Guillaume Hocquet
--- Hugues Tavenard
+- Simon Evain
+- Guillaume Hocquet
+- Hugues Tavenard
 
 ## Original Paper
 
