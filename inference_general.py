@@ -3,8 +3,8 @@
 import numpy as np
 import sys
 import pickle
-
 from sklearn.externals import joblib
+
 from skimage import color
 from matplotlib import pyplot as plt
 from time import time
@@ -50,8 +50,8 @@ def get_models(dataname):
 
 	mlp_model = joblib.load(mlp_file)
 	mlp_moments = pickle.load(open(moments_file, "rb" ))
-	regional_rbm = joblib.load(rbm_r_file)
-	global_rbm = joblib.load(rbm_g_file)
+	regional_rbm = pickle.load(open(rbm_r_file, "rb"))
+	global_rbm = pickle.load(open(rbm_g_file, "rb"))
 
 	return mlp_model, mlp_moments, regional_rbm, global_rbm
 
@@ -177,8 +177,8 @@ labels = np.load(folder + 'labels.npy')
 # saved models
 mlp_model, mlp_moments, regional_rbm, global_rbm = get_models(dataname)
 
-w_rbm_g = global_rbm.components_
-w_rbm_r = regional_rbm.components_
+w_rbm_g = global_rbm
+w_rbm_r = regional_rbm
 
 mean = mlp_moments["mean"]
 std = mlp_moments["std"]
@@ -255,7 +255,7 @@ info_r = {
     "reg_incr_w_r": reg_incr_w_r,
     "reg_incr_h_r": reg_incr_h_r,
     "pixel_to_reg_r": pixel_to_reg_r,
-    "w_rbm_r": w_rbm_r,
+    "w_rbm_r": w_rbm_r
 }
 
 info_g = {
@@ -264,7 +264,7 @@ info_g = {
     "reg_incr_w_g": reg_incr_w_g,
     "reg_incr_h_g": reg_incr_h_g,
     "pixel_to_reg_g": pixel_to_reg_g,
-    "w_rbm_g": w_rbm_g,
+    "w_rbm_g": w_rbm_g
 }
 
 # Sampling ##################################
@@ -275,11 +275,11 @@ for i in range(n_runs):
     Y_guess_ = Y_guess.reshape((height*width, nb_labels))
     Y_guess_ = np.argmax(Y_guess_, axis=1)
     new_accuracy = round(np.sum(Y_guess_ == Y_test) / float(width * height), precision_acc)
-    n_better = (new_accuracy - initial_accuracy) * width * height
+    n_better = np.sum(Y_guess_ == Y_test) - np.sum(Y_init == Y_test)
 
     print "iteration :", i+1
     print "new_accuracy :", new_accuracy
-    print "Number of pixels that have changed :", int(n_better), "\n"
+    print "Number of pixels that have changed :", n_better, "\n"
 
 # Results ##################################
 Y_guess_ = Y_guess.reshape((height*width, nb_labels))

@@ -2,7 +2,18 @@
 
 import numpy as np
 from skimage import color
+from skimage.io import imsave
 import os
+
+def colorize(arr):
+        (h,w) = arr.shape
+        new_arr = np.empty((h,w,3))
+        cdict = {0 : [0,0,0], 1 : [150,0,0], 2: [0,150,0], 3: [0,0,150],
+                4 : [241, 196, 15], 5: [125, 60, 152], 6: [243, 156, 18], 7: [255,255,255]}
+        for y in range(h):
+                for x in range(w):
+                        new_arr[y][x] = cdict[arr[y][x]]
+        return new_arr
 
 images_path_name = "images_rgb"
 labels_path_name = "labels_raw"
@@ -30,6 +41,11 @@ for f in dataset_folders:
 	images  = np.zeros((nb_images, width, height, 3))
 	images_lab = np.zeros((nb_images, width, height, 3))
 	labels = np.zeros((nb_images, width, height))
+	
+	if not os.path.exists(f+"/Images"):
+		os.makedirs(f+"/Images")
+	if not os.path.exists(f+"/Labels"):
+                os.makedirs(f+"/Labels")
 
 	# Build the arrays
 	for i,name in enumerate(files):
@@ -38,15 +54,14 @@ for f in dataset_folders:
 		label = np.loadtxt(open(labels_path+"/"+name))
 
 		# Reshape the data using "order='F'" trick
-		images[i] = np.reshape(image, (width, height, 3), order='F')
+		images[i] = image.reshape((width, height, 3), order='F')
 		labels[i] = np.reshape(label, (width, height), order='F')
-
+		
+		imsave(f+"/Images/"+name+'.jpg', images[i].astype(np.uint8))
+		imsave(f+"/Labels/"+name+'.jpg', colorize(labels[i]).astype(np.uint8))
 		# Convert image to CIE-LAB (image has to takes values between 0 and 1)
 		images[i] = images[i] / 255.
 		images_lab[i] = color.rgb2lab(images[i])
-		
-		if f == "Sowerby_Dataset":
-			images_lab[i] = images_lab[i] * 255.
 
 	# Save the arrays into files
 	np.save(f + '/images_rgb', images)
