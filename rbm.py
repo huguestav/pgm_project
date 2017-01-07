@@ -1,5 +1,7 @@
 import numpy as np
 import pickle
+import parameters
+import sys
 
 def convert_into_regions(img, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_labels, width, height):
 
@@ -20,7 +22,6 @@ def convert_into_regions(img, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_labels, w
 
 def logistic(x):
 	return (1. + np.tanh(x / 2.)) / 2.
-
 
 def fit(X, nb_hidden, batch_size, n_iter, learning_rate):
 	np.random.seed(0)
@@ -50,7 +51,15 @@ def fit(X, nb_hidden, batch_size, n_iter, learning_rate):
 	
 	return w
 
-def train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_iterations):
+def train_rbm(params):
+    labels = np.load(params.labels)
+    nb_hidden = params.nb_hidden
+    reg_w = params.reg_w
+    reg_h = params.reg_h
+    reg_incr_w = params.reg_incr_w
+    reg_incr_h = params.reg_incr_h
+    nb_iterations = params.nb_iterations
+
     nb_labels = len(np.unique(labels))
     (n_samples, height, width) = labels.shape
     trainingset_idx = range(60)
@@ -81,66 +90,20 @@ def save_rbm(rbm, filename):
     pickle.dump(rbm, open("models/" + filename, "wb" ))
     return 0
 
-"""
-labels = np.load('Corel_Dataset/labels.npy')
-filename = 'regional_rbm_corel.pkl'
-nb_hidden = 30
-reg_w = 8
-reg_h = 8
-reg_incr_w = 4
-reg_incr_h = 4
-nb_iterations = 30
+def get_args():
+        if len(sys.argv) < 2:
+                exit("Usage : python " + sys.argv[0] + " <Corel|Sowerby> <region|global>")
+        database = sys.argv[1]
+	scale = sys.argv[2]
+        return database, scale
 
-regional_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_iterations)
-save_rbm(regional_rbm, filename)
-"""
+database, scale = get_args()
 
-"""
-labels = np.load('Corel_Dataset/labels.npy')
-filename = 'global_rbm_corel.pkl'
-nb_hidden = 15
-reg_w = 18
-reg_h = 12
-reg_incr_w = 12
-reg_incr_h = 12
-nb_iterations = 5
-height = 120
-width = 180
-
-global_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w, reg_incr_h, nb_iterations)
-save_rbm(global_rbm, filename)
-"""
-
-###############################################################################
-
-"""
-labels = np.load('Sowerby_Dataset/labels.npy')
-filename = 'regional_rbm_sowerby.pkl'
-nb_hidden = 50
-reg_w = 6
-reg_h = 4
-reg_incr_w = 4
-reg_incr_h = 1
-nb_iterations = 30
-
-regional_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w,
-                         reg_incr_h, nb_iterations)
-save_rbm(regional_rbm, filename)
-"""
-
-
-
-labels = np.load('Sowerby_Dataset/labels.npy')
-filename = 'global_rbm_sowerby.pkl'
-nb_hidden = 10
-reg_w = 8
-reg_h = 8
-reg_incr_w = 8
-reg_incr_h = 8
-nb_iterations = 20
-
-
-global_rbm = train_rbm(labels, nb_hidden, reg_w, reg_h, reg_incr_w,
-                        reg_incr_h, nb_iterations)
-save_rbm(global_rbm, filename)
-
+if database == "Corel" and scale == "region":
+	save_rbm(train_rbm(parameters.param_rbm_corel.reg), 'regional_rbm_corel.pkl')
+if database == "Corel" and scale == "global":
+	save_rbm(train_rbm(parameters.param_rbm_corel.glob), 'global_rbm_corel.pkl')
+if database == "Sowerby" and scale == "region":
+        save_rbm(train_rbm(parameters.param_rbm_corel.reg), 'regional_rbm_sowerby.pkl')
+if database == "Sowerby" and scale == "global":
+        save_rbm(train_rbm(parameters.param_rbm_corel.glob), 'global_rbm_sowerby.pkl')

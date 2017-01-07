@@ -3,6 +3,7 @@
 import numpy as np
 import sys
 import pickle
+import parameters
 from sklearn.externals import joblib
 
 from skimage import color
@@ -10,6 +11,39 @@ from matplotlib import pyplot as plt
 from time import time
 from build_data import build_data
 
+class info:
+
+	def make_regions(self):
+	    nb_reg_w = (self.width - self.reg_w) / self.reg_incr_w + 1
+	    nb_reg_h = (self.height - self.reg_h) / self.reg_incr_h + 1
+	    self.pixel_to_reg = [[[] for j in range(self.width)] for i in range(self.height)]
+	    for i in range(nb_reg_w):
+		p_wt = i * self.reg_incr_w
+		p_wb = p_wt + self.reg_w
+		for j in range(nb_reg_h):
+		    p_hl = j * self.reg_incr_h
+		    p_hr = p_hl + self.reg_h
+		    for wp in range(p_wt,p_wb):
+			for hp in range(p_hl,p_hr):
+			    self.pixel_to_reg[hp][wp].append([p_hl,p_hr,p_wt,p_wb])
+
+	def __init__(self, database, scale, w, width, height):
+		if database == "Corel" and scale == "region":
+			params = parameters.param_rbm_corel.reg
+		if database == "Corel" and scale == "global":
+			params = parameters.param_rbm_corel.glob
+		if database == "Sowerby" and scale == "region":
+			params = parameters.param_rbm_corel.reg
+		if database == "Sowerby" and scale == "global":
+			params = parameters.param_rbm_corel.glob
+		self.reg_w = params.reg_w
+    		self.reg_h = params.reg_h
+    		self.reg_incr_w = params.reg_incr_w
+    		self.reg_incr_h = params.reg_incr_h
+    		self.w_rbm = w
+		self.width = width
+		self.height = height
+		self.make_regions()
 
 def colorize(arr):
 	(h,w) = arr.shape
@@ -54,22 +88,6 @@ def get_models(dataname):
 	global_rbm = pickle.load(open(rbm_g_file, "rb"))
 
 	return mlp_model, mlp_moments, regional_rbm, global_rbm
-
-def convert_into_regions(reg_w, reg_h, reg_incr_w, reg_incr_h, width, height):
-
-    nb_reg_w = (width - reg_w) / reg_incr_w + 1
-    nb_reg_h = (height - reg_h) / reg_incr_h + 1
-    pixel_to_reg = [[[] for j in range(width)] for i in range(height)]
-    for i in range(nb_reg_w):
-        p_wt = i * reg_incr_w
-        p_wb = p_wt + reg_w
-        for j in range(nb_reg_h):
-            p_hl = j * reg_incr_h
-            p_hr = p_hl + reg_h
-            for wp in range(p_wt,p_wb):
-                for hp in range(p_hl,p_hr):
-                    pixel_to_reg[hp][wp].append([p_hl,p_hr,p_wt,p_wb])
-    return pixel_to_reg
 
 def draw_finite(p):
     """
@@ -124,19 +142,19 @@ def compute_proba_rbm(Y_guess, pixel_to_reg, pixel, nb_labels, fixed_labels,
 
 
 def gibbs_sampling(Y_guess, n_steps, rand_order, info_r, info_g, distrib_mlp):
-    reg_w_r = info_r["reg_w_r"]
-    reg_h_r = info_r["reg_h_r"]
-    reg_incr_w_r = info_r["reg_incr_w_r"]
-    reg_incr_h_r = info_r["reg_incr_h_r"]
-    pixel_to_reg_r = info_r["pixel_to_reg_r"]
-    w_rbm_r = info_r["w_rbm_r"]
+    reg_w_r = info_r.reg_w
+    reg_h_r = info_r.reg_h
+    reg_incr_w_r = info_r.reg_incr_w
+    reg_incr_h_r = info_r.reg_incr_h
+    pixel_to_reg_r = info_r.pixel_to_reg
+    w_rbm_r = info_r.w_rbm
 
-    reg_w_g = info_g["reg_w_g"]
-    reg_h_g = info_g["reg_h_g"]
-    reg_incr_w_g = info_g["reg_incr_w_g"]
-    reg_incr_h_g = info_g["reg_incr_h_g"]
-    pixel_to_reg_g = info_g["pixel_to_reg_g"]
-    w_rbm_g = info_g["w_rbm_g"]
+    reg_w_g = info_g.reg_w
+    reg_h_g = info_g.reg_h
+    reg_incr_w_g = info_g.reg_incr_w
+    reg_incr_h_g = info_g.reg_incr_h
+    pixel_to_reg_g = info_g.pixel_to_reg
+    w_rbm_g = info_g.w_rbm
 
     (height, width, nb_labels) = Y_guess.shape
     fixed_labels = np.eye(nb_labels)
@@ -186,28 +204,6 @@ nb_labels = len(np.unique(labels))
 precision_acc = 3
 np.random.seed(3)
 
-# rmb parameters
-if dataname == "corel":
-    reg_w_g = 18
-    reg_h_g = 12
-    reg_incr_h_g = 12
-    reg_incr_w_g = 18
-
-    reg_w_r = 8
-    reg_h_r = 8
-    reg_incr_w_r = 4
-    reg_incr_h_r = 4
-if dataname == "sowerby":
-    reg_w_g = 8
-    reg_h_g = 8
-    reg_incr_w_g = 8
-    reg_incr_h_g = 8
-
-    reg_w_r = 6
-    reg_h_r = 4
-    reg_incr_w_r = 4
-    reg_incr_h_r = 1
-
 (n_samples, height, width, p) = images.shape
 n_steps = width * height
 
@@ -242,30 +238,10 @@ Y_guess = Y_guess.reshape((height, width, nb_labels))
 # Sampling parameters
 rand_order = np.arange(width*height)
 np.random.shuffle(rand_order)
-fixed_labels = np.eye(7)
-pixel_to_reg_g = convert_into_regions(reg_w_g,reg_h_g, reg_incr_w_g, reg_incr_h_g,
-                                    width, height)
-pixel_to_reg_r = convert_into_regions(reg_w_r,reg_h_r, reg_incr_w_r, reg_incr_h_r,
-                                    width, height)
 
-# Build the two information dicts
-info_r = {
-    "reg_w_r": reg_w_r,
-    "reg_h_r": reg_h_r,
-    "reg_incr_w_r": reg_incr_w_r,
-    "reg_incr_h_r": reg_incr_h_r,
-    "pixel_to_reg_r": pixel_to_reg_r,
-    "w_rbm_r": w_rbm_r
-}
-
-info_g = {
-    "reg_w_g": reg_w_g,
-    "reg_h_g": reg_h_g,
-    "reg_incr_w_g": reg_incr_w_g,
-    "reg_incr_h_g": reg_incr_h_g,
-    "pixel_to_reg_g": pixel_to_reg_g,
-    "w_rbm_g": w_rbm_g
-}
+# Build the two information class
+info_r = info(database, "region", w_rbm_r, width, height)
+info_g = info(database, "global", w_rbm_g, width, height)
 
 # Sampling ##################################
 print "Sample..."
