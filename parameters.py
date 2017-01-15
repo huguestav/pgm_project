@@ -6,7 +6,7 @@ class param_rbm_corel:
 		reg_h = 8
 		reg_incr_w = 4
 		reg_incr_h = 4
-		nb_iterations = 30
+		nb_iterations = 5
 	class glob:
 		labels = 'Corel_Dataset/labels.npy'
 		nb_hidden = 15
@@ -24,7 +24,7 @@ class param_rbm_sowerby:
 		reg_h = 4
 		reg_incr_w = 4
 		reg_incr_h = 1
-		nb_iterations = 30
+		nb_iterations = 5
 	class glob:
 		labels = 'Sowerby_Dataset/labels.npy'
 		nb_hidden = 10
@@ -32,11 +32,11 @@ class param_rbm_sowerby:
 		reg_h = 8
 		reg_incr_w = 8
 		reg_incr_h = 8
-		nb_iterations = 20
+		nb_iterations = 5
 
 class param_mlp:
 	hidden_layer_sizes = (80,)
-	max_iter = 100
+	max_iter = 5
 	alpha = 1e-4
 	solver = 'adam'
 	activation = 'logistic'

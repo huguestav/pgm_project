@@ -21,4 +21,5 @@ python inference.py Corel 70
 
 - OpenCV
 - sklearn
+- skimage
 - numpy
