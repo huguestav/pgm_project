@@ -40,7 +40,8 @@ class MLP():
 		if subset != []:
 			Y = Y[subset]
 			X = X[subset]
-		X = X#build_data(images)
+        # X = X#build_data(images)
+		X = build_data(X)
     		self.mean = np.mean(X, axis=(0,1,2))
     		self.std = np.std(X, axis=(0,1,2))
 		X = self.normalize(X)
